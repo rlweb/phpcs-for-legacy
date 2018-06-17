@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rlweb\PHPCSLegacy;
 
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -18,8 +19,8 @@ class PHPCSLegacyCommand extends Command
 
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
-		$output = $this->getGitDiffOutput();
-		$changedLines = $this->transformGitDiff($output);
+		$diffOutput = $this->getGitDiffOutput();
+		$changedLines = $this->transformGitDiff($diffOutput);
 		$issues = $this->runPHPCSonFiles(array_keys($changedLines));
 
 
@@ -37,15 +38,19 @@ class PHPCSLegacyCommand extends Command
 		return $gitDiffExec->run();
 	}
 
-	private function transformGitDiff($input): array
+	private function transformGitDiff(string $input): array
 	{
 		$diffFileLoader = new DiffFileLoader();
 
 		return $diffFileLoader->load($input);
 	}
 
-	private function runPHPCSonFiles($array_keys)
+	private function runPHPCSonFiles(array $files): array
 	{
+		$phpCsRunner = new PHPCSRunner();
+
+		return $phpCsRunner->run($files);
+	}
 
 	}
 }

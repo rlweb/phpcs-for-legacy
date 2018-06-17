@@ -69,4 +69,35 @@ EXAMPLE;
 			$diffFile->load($diffPatch)
 		);
 	}
+	public function testDiffChmodFile()
+	{
+		$diffPatch = <<<EXAMPLE
+diff --git a/bin/phpcslegacy b/bin/phpcslegacy
+old mode 100644
+new mode 100755
+index 9b14859..7d92dc5
+--- a/bin/phpcslegacy
++++ b/bin/phpcslegacy
+@@ -1,11 +1,11 @@
+ #!/usr/bin/env php
+ <?php
+-require __DIR__.'/vendor/autoload.php';
++require __DIR__ . '/../vendor/autoload.php';
+ 
+ use Symfony\Component\Console\Application;
+ 
+ \$application = new Application();
+ 
+-\$application->add(new \Rlweb\PHPCSLegacy\PHPCSLegacyCommand());
++\$application->add(new \Rlweb\PHPCSLegacy\PHPCSLegacyCommand('run'));
+ 
+ \$application->run();
+\ No newline at end of file
+EXAMPLE;
+		$diffFile = new DiffFileLoader();
+		$this->assertSame(
+			['bin/phpcslegacy' => [3,9]],
+			$diffFile->load($diffPatch)
+		);
+	}
 }

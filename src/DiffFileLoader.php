@@ -8,6 +8,8 @@ use Exception;
 
 /**
  * Class DiffFileLoader
+ *
+ * Take apart the Git Diff Output and return an array of fileName to lines changed
  */
 class DiffFileLoader
 {
@@ -19,6 +21,7 @@ class DiffFileLoader
 	const LINE_TYPE_REMOVE_LINE = 'removeLine';
 	const LINE_TYPE_DIFF_LINE = 'diffLine;';
 	const LINE_TYPE_NO_NEWLINE = 'noNewline';
+	const LINE_TYPE_MODIFY_PERMS = 'permissions';
 
 	/**
 	 * @param $diffOutput
@@ -34,6 +37,9 @@ class DiffFileLoader
 		$currentLine = null;
 		$modifiedLines = [];
 		foreach ($lineByLineDiffOutput as $line) {
+			if (empty($line)) {
+				continue;
+			}
 			list($lineType, $extra) = $this->getLineType($line);
 
 			switch ($lineType) {
@@ -77,6 +83,9 @@ class DiffFileLoader
 				$type = self::LINE_TYPE_DIFF_HEADER;
 				$extra['fileName'] = $matches[1];
 				break;
+			case preg_match('/^(old|new) mode (?:.*)$/', $line, $matches) === 1:
+				$type = self::LINE_TYPE_MODIFY_PERMS;
+				break;
 			case preg_match('/^(index|mode|new file mode|deleted file mode) (?:.*)$/', $line, $matches) === 1:
 				$type = self::LINE_TYPE_EXTENDED_HEADER;
 				$extra['type'] = $matches[0];
@@ -85,7 +94,8 @@ class DiffFileLoader
 				$type = self::LINE_TYPE_TO_FROM_HEADER;
 				$extra['type'] = $matches[0];
 				break;
-			case preg_match('/^@@ (.*) (.*) @@$/', $line, $matches) === 1:
+			case preg_match('/^@@ (.*) (.*) @@(.*)$/', $line, $matches) === 1:
+				// todo Git gives '@@ -8,6 +8,8 @@ use Exception;' why?
 				// todo generally for this use case, nah but there could be more @'s
 				// "There are (number of parents + 1) @ characters in the chunk header for combined diff format."
 				$type = self::LINE_TYPE_CHUNK_HEADER;
@@ -122,6 +132,11 @@ class DiffFileLoader
 	 */
 	private function addFileWithLines($diff, $modifiedLines, $currentFile): array
 	{
+		// Only add PHP files
+		if (preg_match('/^(.*).php$/', $currentFile, $matches) !== 1) {
+			return $diff;
+		}
+
 		$modifiedLines = array_unique($modifiedLines);
 		sort($modifiedLines);
 		$diff[$currentFile] = $modifiedLines;

@@ -13,7 +13,10 @@ use Symfony\Component\Process\Process;
  */
 class GitDiffExec
 {
-	public function run($branch = null): string
+	/**
+	 * @return string
+	 */
+	public function run(): string
 	{
 		$process = new Process('git diff head');
 		$process->run();

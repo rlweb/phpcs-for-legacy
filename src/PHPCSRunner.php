@@ -14,14 +14,19 @@ class PHPCSRunner
 	/**
 	 * @param array $fileList
 	 * @return array
+	 * @throws \Exception
 	 */
 	public function run(array $fileList): array
 	{
 		$errorsPerFile = [];
 		foreach ($fileList as $file) {
-			$cmd = new Process('vendor/bin/phpcs ' . $file . ' --report=json');
+			$cmd = new Process('vendor/bin/phpcs --standard=ruleset.xml ' . $file . ' --report=json');
 			$cmd->run();
 			$result = json_decode($cmd->getOutput(), true);
+			if (!$result) {
+				// todo
+				throw new \Exception($cmd->getOutput());
+			}
 			$errorsPerFile[$file] = reset($result['files'])['messages'];
 		}
 

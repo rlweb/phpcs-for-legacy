@@ -16,7 +16,7 @@ class PHPCSLegacyCommand extends Command
 {
 	protected function configure()
 	{
-		$this->setName('run')
+		$this->setName('phpcs')
 			->setDescription('Runs PHPCS on git modified files');
 	}
 

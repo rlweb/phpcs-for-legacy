@@ -36,6 +36,10 @@ class DiffFileLoader
 		$currentFile = null;
 		$currentLine = null;
 		$modifiedLines = [];
+
+		// Separate the diff output
+		$lineByLineDiffOutput = preg_split('/\\n/', reset($lineByLineDiffOutput));
+
 		foreach ($lineByLineDiffOutput as $line) {
 			if (empty($line)) {
 				continue;

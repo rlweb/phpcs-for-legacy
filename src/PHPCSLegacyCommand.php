@@ -35,7 +35,7 @@ class PHPCSLegacyCommand extends Command
 		);
 		if (!$issues) {
 			// No errors returned!
-			return 1;
+			return 0;
 		}
 		$issues = $this->diffIssuesWithChangedLines($changedLines, $issues);
 		$this->renderIssues($output, $issues);

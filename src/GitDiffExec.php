@@ -13,14 +13,10 @@ use Symfony\Component\Process\Process;
  */
 class GitDiffExec
 {
-	/**
-	 * @return string
-	 */
 	public function run(): string
 	{
-		$process = new Process('git diff head');
+		$process = new Process('git diff head  -U0');
 		$process->run();
-		// todo handle errors
 		return $process->getOutput();
 	}
 }

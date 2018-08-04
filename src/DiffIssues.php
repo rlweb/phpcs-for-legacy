@@ -6,13 +6,16 @@ namespace Rlweb\PHPCSLegacy;
 
 /**
  * Class DiffIssues
+ *
+ * Diff a list of issues given from PHP-CS with a list of changed lines on files
  */
 class DiffIssues
 {
 	/**
-	 * @param array $changedLines
-	 * @param array $fileIssues
-	 * @return array
+	 * @param int[]   $changedLines
+	 * @param mixed[] $fileIssues
+	 * @return mixed[]
+	 * @throws \Exception
 	 */
 	public function run(array $changedLines, array $fileIssues): array
 	{
@@ -20,14 +23,19 @@ class DiffIssues
 		foreach ($fileIssues as $file => $issues) {
 			$newIssues = [];
 			foreach ($issues as $issue) {
-				if (in_array($issue['line'], $changedLines[$file], true)) {
-					$newIssues[] = $issue;
+				if (!isset($changedLines[$file])) {
+					throw new \Exception('File Folder Mismatch File:' . $file);
 				}
+				if (!in_array($issue['line'], $changedLines[$file], true)) {
+					continue;
+				}
+				$newIssues[] = $issue;
 			}
 
-			if ($newIssues) {
-				$newFileIssues[$file] = $newIssues;
+			if (!$newIssues) {
+				continue;
 			}
+			$newFileIssues[$file] = $newIssues;
 		}
 
 		return $newFileIssues;

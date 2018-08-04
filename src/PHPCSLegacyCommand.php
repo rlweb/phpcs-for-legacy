@@ -14,34 +14,36 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class PHPCSLegacyCommand extends Command
 {
-	protected function configure()
+	protected function configure(): void
 	{
-		$this->setName('run')
+		$this->setName('phpcs')
 			->setDescription('Runs PHPCS on git modified files');
 	}
 
-	/**
-	 * @param InputInterface  $input
-	 * @param OutputInterface $output
-	 * @return int
-	 * @throws \Exception
-	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
 		$diffOutput = $this->getGitDiffOutput();
 		$changedLines = $this->transformGitDiff($diffOutput);
+		$output->writeln(
+			"Changed Lines: " . json_encode($changedLines, JSON_PRETTY_PRINT),
+			OutputInterface::VERBOSITY_VERBOSE
+		);
 		$issues = $this->runPHPCSonFiles(array_keys($changedLines));
+		$output->writeln(
+			"All Issues: " . json_encode($issues, JSON_PRETTY_PRINT),
+			OutputInterface::VERBOSITY_VERY_VERBOSE
+		);
+		if (!$issues) {
+			// No errors returned!
+			return 1;
+		}
 		$issues = $this->diffIssuesWithChangedLines($changedLines, $issues);
-
 		$this->renderIssues($output, $issues);
 
 		// Return valid status code
 		return count($issues) ? 1 : 0;
 	}
 
-	/**
-	 * @return string
-	 */
 	private function getGitDiffOutput(): string
 	{
 		$gitDiffExec = new GitDiffExec();
@@ -49,11 +51,6 @@ class PHPCSLegacyCommand extends Command
 		return $gitDiffExec->run();
 	}
 
-	/**
-	 * @param string $input
-	 * @return array
-	 * @throws \Exception
-	 */
 	private function transformGitDiff(string $input): array
 	{
 		$diffFileLoader = new DiffFileLoader();
@@ -63,21 +60,16 @@ class PHPCSLegacyCommand extends Command
 
 	/**
 	 * @param array $files
-	 * @return array
+	 * @return null|array
 	 * @throws \Exception
 	 */
-	private function runPHPCSonFiles(array $files): array
+	private function runPHPCSonFiles(array $files): ?array
 	{
 		$phpCsRunner = new PHPCSRunner();
 
 		return $phpCsRunner->run($files);
 	}
 
-	/**
-	 * @param array $changedLines
-	 * @param array $issues
-	 * @return array
-	 */
 	private function diffIssuesWithChangedLines(array $changedLines, array $issues): array
 	{
 		$diffIssues = new DiffIssues();
@@ -87,7 +79,7 @@ class PHPCSLegacyCommand extends Command
 
 	/**
 	 * @param OutputInterface $output
-	 * @param array           $issues
+	 * @param mixed[]         $issues
 	 */
 	private function renderIssues(OutputInterface $output, array $issues)
 	{
@@ -109,8 +101,13 @@ class PHPCSLegacyCommand extends Command
 			$issuesTotal = $issuesTotal + count($file);
 		}
 
-		if ($issuesTotal) {
-			$output->writeln('Count - Files:' . count($issues) . ' Issues:' . $issuesTotal);
+		if (!$issuesTotal) {
+			return;
 		}
+		$output->writeln(
+			"Diff Issues: " . json_encode($issues, JSON_PRETTY_PRINT),
+			OutputInterface::VERBOSITY_VERBOSE
+		);
+		$output->writeln('Count - Files:' . count($issues) . ' Issues:' . $issuesTotal);
 	}
 }
